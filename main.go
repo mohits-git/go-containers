@@ -33,7 +33,7 @@ func run() {
 	cmd.Stderr = os.Stderr
 
 	if runtime.GOOS == "linux" {
-        fmt.Println("Warning: If you're on Linux, uncomment the code manually")
+		fmt.Println("Warning: If you're on Linux, uncomment the code manually")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			// Cloneflags: syscall.CLONE_NEWUTS,
 		}
@@ -41,7 +41,7 @@ func run() {
 		fmt.Println("Warning: macOS does not support Linux namespaces")
 	}
 
-    must(cmd.Run())
+	must(cmd.Run())
 }
 
 func must(err error) {
