@@ -14,6 +14,10 @@ import (
 // go run main.go run       <cmd> <params>
 
 func main() {
+	if len(os.Args) < 2 {
+		panic("specify a command")
+	}
+
 	switch os.Args[1] {
 	case "run":
 		run()
@@ -39,6 +43,8 @@ func run() {
 		}
 	} else if runtime.GOOS == "darwin" {
 		fmt.Println("Warning: macOS does not support Linux namespaces")
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+    }
 	}
 
 	must(cmd.Run())
