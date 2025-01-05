@@ -36,16 +36,14 @@ func run() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	if runtime.GOOS == "linux" {
-		fmt.Println("Warning: If you're on Linux, uncomment the code manually")
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			// Cloneflags: syscall.CLONE_NEWUTS,
-		}
-	} else if runtime.GOOS == "darwin" {
-		fmt.Println("Warning: macOS does not support Linux namespaces")
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-    }
-	}
+  if runtime.GOOS != "linux" {
+    fmt.Println("this operating system is not supported")
+    os.Exit(0)
+  }
+
+ 	cmd.SysProcAttr = &syscall.SysProcAttr{
+ 		 Cloneflags: syscall.CLONE_NEWUTS,
+ 	}
 
 	must(cmd.Run())
 }
