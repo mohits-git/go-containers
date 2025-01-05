@@ -10,11 +10,6 @@ import (
 	"syscall"
 )
 
-/// What we are building?
-// docker         run image <cmd> <params>
-// building equivalent:
-// go run main.go run       <cmd> <params>
-
 func main() {
 	if len(os.Args) < 2 {
 		panic("specify a command")
@@ -55,7 +50,7 @@ func run() {
 func child() {
 	fmt.Printf("Running %v as %v\n", os.Args[2:], os.Getpid())
 
-  cg()
+	cg()
 
 	syscall.Sethostname([]byte("mycontainer"))
 	// pwd
@@ -63,12 +58,12 @@ func child() {
 	if err != nil {
 		panic(err)
 	}
+
 	syscall.Chroot(path + "/rootfs")
 	syscall.Chdir("/")
 	syscall.Mount("proc", "proc", "proc", 0, "")
 
 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
-
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -78,15 +73,28 @@ func child() {
 	syscall.Unmount("/proc", 0)
 }
 
-func cg() {
-	pids := "/sys/fs/cgroup/pids"
-	err := os.Mkdir(filepath.Join(pids, "liz"), 0755)
-	if err != nil && !os.IsExist(err) {
-		panic(err)
+// cg sets up the cgroup
+func cg() error {
+	cgroupPath := "/sys/fs/cgroup"
+	containerPath := filepath.Join(cgroupPath, "liz")
+
+	// create the cgroup directory
+	if err := os.MkdirAll(containerPath, 0755); err != nil {
+		return fmt.Errorf("failed to create cgroup directory: %v", err)
 	}
-	must(os.WriteFile(filepath.Join(pids, "liz/pids.max"), []byte("20"), 0700))
-	must(os.WriteFile(filepath.Join(pids, "liz/notify_on_release"), []byte("1"), 0700))
-	must(os.WriteFile(filepath.Join(pids, "liz/cgroup.procs"), []byte(strconv.Itoa(os.Getpid())), 0700))
+
+	// set the maximum number of processes
+	if err := os.WriteFile(filepath.Join(containerPath, "pids.max"), []byte("20"), 0644); err != nil {
+		return fmt.Errorf("failed to set pids.max: %v", err)
+	}
+
+	// add current process to the cgroup
+	if err := os.WriteFile(filepath.Join(containerPath, "cgroup.procs"),
+		[]byte(strconv.Itoa(os.Getpid())), 0644); err != nil {
+		return fmt.Errorf("failed to add process to cgroup: %v", err)
+	}
+
+	return nil
 }
 
 func must(err error) {
